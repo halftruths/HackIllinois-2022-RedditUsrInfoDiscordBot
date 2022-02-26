@@ -10,17 +10,26 @@ import time
 from prawcore.exceptions import NotFound
 import json
 
+from dotenv import load_dotenv
+import scraper as scrape
+
+load_dotenv("./.env")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+PASSWORD = os.getenv("PASS")
+USER_AGENT = os.getenv("USER_AGENT")
+USERNAME = os.getenv("USERNAME")
 
 abs_path = os.path.abspath(__file__)
 dir_name = os.path.dirname(abs_path)
 os.chdir(dir_name)
 
 reddit = praw.Reddit( #instance of praw reddit for API access
-    client_id = 'g1newHxnqEdQYH8vN8hSLw',
-    client_secret = '34WhZ0gJxY5bmnrd1OpPDocqMWV8Wg',
-    password = 'Bestlangpython666',
-    user_agent = 'andrew_web_scraper',
-    username = 'Ok-General847',
+    client_id = CLIENT_ID,
+    client_secret = CLIENT_SECRET,
+    password = PASSWORD,
+    user_agent = USER_AGENT,
+    username = USERNAME,
 )
 reddit.read_only = True;
 
