@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv("./.env")
 TOKEN = os.getenv('DISCORD_TOKEN')
+PREFIX = "r!"
+
 
 client = discord.Client()
 
@@ -15,10 +17,16 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
-        return
+    command = message.content.strip().split()
+    if (command[0][0:2] == PREFIX):
+        command_name = command[0][2:]
+        if message.author == client.user:
+            return
 
-    if message.content == 'ping':
-        await message.channel.send('pong')
+        if command_name == 'ping':
+            await message.channel.send('pong')
+
+
+    
 
 client.run(TOKEN)
