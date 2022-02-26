@@ -3,6 +3,7 @@ import os
 
 import discord
 from dotenv import load_dotenv
+import scraper as scrape
 
 load_dotenv("./.env")
 TOKEN = os.getenv('DISCORD_TOKEN')
