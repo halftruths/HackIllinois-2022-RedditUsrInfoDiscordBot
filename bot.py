@@ -26,7 +26,4 @@ async def on_message(message):
         if command_name == 'ping':
             await message.channel.send('pong')
 
-
-    
-
 client.run(TOKEN)
