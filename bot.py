@@ -19,6 +19,6 @@ async def on_message(message):
         return
 
     if message.content == 'ping':
-        await message.channel.send('seal so sexy')
+        await message.channel.send('pong')
 
 client.run(TOKEN)
