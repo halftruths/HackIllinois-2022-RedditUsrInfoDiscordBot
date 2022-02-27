@@ -97,6 +97,10 @@ async def on_message(message):
 
 
         if command_name == "activitychart":
+            if (len(command) == 1):
+                await message.channel.send("Error: No username inputted.")
+                return
+
             username = command[1]
             if (not is_user_in_dict(username=username)):
                 if (scraper.UserExists(username, reddit=reddit)):
@@ -114,6 +118,56 @@ async def on_message(message):
             embed = make_embed("Top 5 Subreddits by Posts/Replies", "For u/" + username)
             file = discord.File("piechart.png", filename="image.png")
             await message.channel.send(file=file, embed=embed)
+
+        if command_name == "topposts":
+            if (len(command) == 1):
+                await message.channel.send("Error: No username inputted.")
+                return
+
+            username = command[1]
+            if (not is_user_in_dict(username=username)):
+                if (scraper.UserExists(username, reddit=reddit)):
+                    add_user_to_dict(username)
+                else:
+                    await message.channel.send("Error: Invalid username inputted.")
+            user = username_dict[username]
+            top_posts = scraper.TopFiveVotedSubmissionsData()
+            top_posts.FindFiveMostVotedSubmissions(user.user_submissions_list)
+            posts_string = top_posts.GetFiveMostVotedSubmissions()
+            embed = make_embed("Top 5 Posts by Upvotes", "For u/" + username)
+            embed.add_field(name="Posts:", value=posts_string, inline=False)
+            await message.channel.send(embed=embed)
+
+
+
+        if command_name == "topcomments":
+            if (len(command) == 1):
+                await message.channel.send("Error: No username inputted.")
+                return
+            
+            username = command[1]
+            if (not is_user_in_dict(username=username)):
+                if (scraper.UserExists(username, reddit=reddit)):
+                    add_user_to_dict(username)
+                else:
+                    await message.channel.send("Error: Invalid username inputted.")
+            user = username_dict[username]
+            top_comms = scraper.TopFiveVotedCommentsData()
+            top_comms.FindFiveMostVotedComments(user.user_comments_list)
+            comms_string = top_comms.GetFiveMostVotedComments()
+            embed = make_embed("Top 5 Comments by Upvotes", "For u/" + username)
+            embed.add_field(name="Comments:", value=comms_string, inline=False)
+            await message.channel.send(embed=embed)
+
+
+        if command_name == "all":
+            username = command[1]
+            if (not is_user_in_dict(username=username)):
+                if (scraper.UserExists(username, reddit=reddit)):
+                    add_user_to_dict(username)
+                else:
+                    await message.channel.send("Error: Invalid username inputted.")
+            user = username_dict[username]
 
 
 def is_user_in_dict(username: str):
