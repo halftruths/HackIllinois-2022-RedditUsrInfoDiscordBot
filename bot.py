@@ -33,13 +33,16 @@ async def on_message(message):
             await message.channel.send('pong')
 
         if command_name == 'test':
+            plot = plt.pie([10, 80, 10], explode=[0.5, 0, 0.1], labels=["87", "19", "21"], shadow=True, autopct='%1.1f%%', startangle=90)
+            plt.title("What's 9 + 10")
+            plt.savefig("piechart")
             embed = make_embed("My Fellow Americans", "According to the 2020 US census")
-            file = discord.File("baby.png", filename="image.png")
+            file = discord.File("piechart.png", filename="image.png")
             await message.channel.send(file=file, embed=embed)
 
 
 def make_embed(embed_title, description):
-    embed=discord.Embed(title=embed_title, type="rich", description=description, color=discord.Color.blue())
+    embed=discord.Embed(title=embed_title, type="rich", description=description,  color=discord.Color.blue())
     embed.set_image(url="attachment://image.png")
     return embed
 
