@@ -64,7 +64,7 @@ class UserInfo:
         self.suspended = suspended
         self.info_map = {"Username":self.name, "Cake Day":self.cake_day, "Age":self.age, "User Comment Karma":self.karma_comments, "User Overall Karma":self.karma_overall, "User is a moderator":self.moderator, "User is suspended":self.suspended, "User ID":self.id}
     
-    def SetBasicInfo(self):
+    def SetBasicInfo(self, user_as_redditor):
         #Username
         self.name = user_as_redditor.name
         #Is user suspended
@@ -275,12 +275,15 @@ class VoteDistribution:
 
     def GetDistributionAsList(self):
         dist_list = []
+        labels = []
         for idx in range(0,len(self.info_list_of_maps)):
             
            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
-                temp = v.split()
-                dist_list += (temp[0], temp[5])
-        return dist_list
+                if k == 'Vote Count':
+                    dist_list.append(v)
+                elif k == 'Subreddit':
+                    labels.append(v)
+        return dist_list, labels
 
     def ConvertVoteDistributionToTxt(self):
         with open("scraper_output.json", "r") as f:   
@@ -355,11 +358,14 @@ class MostActiveSubs:
 
     def GetActiveSubsAsList(self):
         subs_list = []
+        labels = []
         for idx in range(0, len(self.info_list_of_maps)):
             for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
-                temp = v.split()
-                subs_list += (temp[0], temp[5])
-        return subs_list
+                if k == 'Post/Repl Count':
+                    subs_list.append(v)
+                if k == 'Subreddit':
+                    labels.append(v)
+        return subs_list, labels
 
     def ConvertActiveSubsToTxt(self):
         with open("scraper_output.json", "r") as f:   
