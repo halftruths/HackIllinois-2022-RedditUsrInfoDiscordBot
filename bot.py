@@ -52,14 +52,6 @@ async def on_message(message):
         if command_name == 'ping':
             await message.channel.send('pong')
 
-        if command_name == 'test':
-            plot = plt.pie([10, 80, 10], explode=[0.5, 0, 0.1], labels=["87", "19", "21"], shadow=True, autopct='%1.1f%%', startangle=90)
-            plt.title("What's 9 + 10")
-            plt.savefig("piechart")
-            embed = make_embed("My Fellow Americans", "According to the 2020 US census")
-            file = discord.File("piechart.png", filename="image.png")
-            await message.channel.send(file=file, embed=embed)
-
         if command_name == 'help':
             embed = discord.Embed(title="Help Commands", description="Here is a list of commands available with this bot: \n r!ping - responds \"pong\" (connection check) \n r!stats <username> - shows basic user statistics \n r!all <username> - shows all data scraped from reddit \n r!popchart <username> - embeds a piechart of the user's upvote distribution \n r!activitychart <username> - embeds a piechart of user's activity distribution \nr!topcomments <username> - shows the user's top five voted comments \nr!topposts <username> - shows the user's top five voted posts")
             await message.channel.send(embed=embed)
