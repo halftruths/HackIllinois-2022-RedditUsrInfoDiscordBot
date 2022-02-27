@@ -26,6 +26,8 @@ class RedditWrapper:
 
     def __init__(self, username : str):
         user_as_redditor = reddit.redditor(username)
+        self.user_info = scraper.UserInfo()
+        self.user_info.SetBasicInfo(user_as_redditor)
         self.user_comments_list = list(user_as_redditor.comments.new(limit=99)).copy() #Limited to 100 historical submissions by Reddit API
         self.user_submissions_list = list(user_as_redditor.submissions.new(limit=99)).copy() #Limited to 100 historical submissions by Reddit API
 # Dict of usernames to reddit wrapper object
@@ -62,15 +64,21 @@ async def on_message(message):
             embed = discord.Embed(title="Help Commands", description="Here is a list of commands available with this bot: \n r!ping - responds \"pong\" (connection check) \n r!stats <username> - shows basic user statistics \n r!all <username> - shows all data scraped from reddit \n r!popchart <username> - embeds a piechart of the user's upvote distribution \n r!activitychart <username> - embeds a piechart of user's activity distribution \nr!topcomments <username> - shows the user's top five voted comments \nr!topposts <username> - shows the user's top five voted posts")
             await message.channel.send(embed=embed)
             
-        if command_name == 's':
-            user_as_redditor = scraper.reddit.redditor(command[2][0:2])
-            user_info = scraper.UserInfo()
+        if command_name == 'stats':
+            if (len(command) == 1):
+                await message.channel.send("Error: No username inputted.")
+                return
+
+            username = command[1]
             if (not is_user_in_dict(username=username)):
-                if (scraper.UserExists(username)):
-                    add_user_to_dict()
-                
-                embedU = discord.Embed(title="User Information", description="")
-                await message.channel.send(embed=embed)
+                if (scraper.UserExists(username, reddit=reddit)):
+                    add_user_to_dict(username)
+                else:
+                    await message.channel.send("Error: Invalid username inputted.")
+            user = username_dict[username]
+            info_string = user.user_info.BasicInfoAsString()
+            embed = make_embed("User Info", info_string)
+            await message.channel.send(embed=embed)
 
         if command_name == "popchart":
             if (len(command) == 1):
@@ -168,6 +176,31 @@ async def on_message(message):
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
             user = username_dict[username]
+            info_string = user.user_info.BasicInfoAsString()
+
+            distribution = scraper.VoteDistribution()
+            distribution.FindVoteDistribution(user.user_comments_list, user.user_submissions_list)
+            dist_string = distribution.GetVoteDistribution()
+
+            most_subs = scraper.MostActiveSubs()
+            most_subs.FindMostActive(user.user_comments_list, user.user_submissions_list)
+            subs_string = most_subs.GetActiveSubs()
+
+            top_comms = scraper.TopFiveVotedCommentsData()
+            top_comms.FindFiveMostVotedComments(user.user_comments_list)
+            comms_string = top_comms.GetFiveMostVotedComments()
+
+            top_posts = scraper.TopFiveVotedSubmissionsData()
+            top_posts.FindFiveMostVotedSubmissions(user.user_submissions_list)
+            posts_string = top_posts.GetFiveMostVotedSubmissions()
+
+            embed = make_embed("Reddit Scrape Summary", "For u/" + username)
+            embed.add_field(name="User Statistics", value=info_string, inline=False)
+            embed.add_field(name="Top Servers by Upvotes", value=dist_string, inline=False)
+            embed.add_field(name="Top Servers by Posts/Replies", value=subs_string, inline=False)
+            embed.add_field(name="Top 5 Posts by Upvotes", value=posts_string, inline=False)
+            embed.add_field(name="Top 5 Comments by Upvotes", value=comms_string, inline=False)
+            await message.channel.send(embed=embed)
 
 
 def is_user_in_dict(username: str):

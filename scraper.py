@@ -109,6 +109,13 @@ class UserInfo:
     def PrintBasicInfo(self):
         for i,(k,v) in enumerate(self.info_map.items()):
             print(str(k) + ": " + str(v))
+
+    def BasicInfoAsString(self):
+        to_return = ""
+        for i,(k,v) in enumerate(self.info_map.items()):
+            to_return += str(k) + ": " + str(v) + "\n"
+        return to_return
+
 class TopFiveVotedSubmissionsData:
     descriptive_header: str
     info_list_of_maps: list
