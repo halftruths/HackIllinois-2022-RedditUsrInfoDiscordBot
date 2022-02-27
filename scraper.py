@@ -15,27 +15,18 @@ abs_path = os.path.abspath(__file__)
 dir_name = os.path.dirname(abs_path)
 os.chdir(dir_name)
 
-reddit = praw.Reddit( #instance of praw reddit for API access
-    client_id = 'g1newHxnqEdQYH8vN8hSLw',
-    client_secret = '34WhZ0gJxY5bmnrd1OpPDocqMWV8Wg',
-    password = 'Bestlangpython666',
-    user_agent = 'andrew_web_scraper',
-    username = 'Ok-General847',
-)
-reddit.read_only = True;
-
-def UserExists(name: str): #Check if username exists
+def UserExists(name: str, reddit: praw.models.Redditor): #Check if username exists
     try:
         reddit.redditor(name).id
     except NotFound:
         return False
     return True
 
-def GetUsernameInput(): #Check if inputted username is valid
+def GetUsernameInput(reddit: praw.models.Redditor): #Check if inputted username is valid
     name = input("Enter username (eg _dancingrain_): ")
-    if (not UserExists(name)):
+    if (not UserExists(name, reddit)):
         print("\nUsername not found, try again\n")
-        return GetUsernameInput()
+        return GetUsernameInput(reddit)
     return name;
 
 class UserInfo:
@@ -117,7 +108,7 @@ class TopFiveVotedSubmissionsData:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindFiveMostVotedSubmissions(self):
+    def FindFiveMostVotedSubmissions(self, user_submissions_list:list):
         sorted_submissions = sorted(user_submissions_list,key=lambda x:x.score, reverse=True)
         idx = 0
         for submission in sorted_submissions:
@@ -160,7 +151,7 @@ class TopFiveVotedCommentsData:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindFiveMostVotedComments(self):
+    def FindFiveMostVotedComments(self, user_comments_list: list):
         sorted_comments = sorted(user_comments_list,key=lambda x:x.score, reverse=True)
         idx = 0
         for comments in sorted_comments:
@@ -202,7 +193,7 @@ class VoteDistribution:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindVoteDistribution(self): 
+    def FindVoteDistribution(self, user_comments_list:list, user_submissions_list:list): 
         active_subreddits_map = {}
         #combine comments and submissions into dictionary format {sub name, upvote count} to easily organize subreddits and increment their upvote counts
         for comments in user_comments_list:
@@ -264,7 +255,7 @@ class MostActiveSubs:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindMostActive(self):
+    def FindMostActive(self, user_comments_list:list, user_submissions_list:list):
         active_subreddits_map = {}
         #combine comments and submissions into dictionary format {sub name, upvote count} to easily organize subreddits and increment their interaction count
         for comments in user_comments_list:
@@ -348,13 +339,21 @@ def GetUserFromJson(file_name:str):
     return to_return
 
 if __name__ == '__main__':
+    
+    reddit = praw.Reddit( #instance of praw reddit for API access
+        client_id = 'g1newHxnqEdQYH8vN8hSLw',
+        client_secret = '34WhZ0gJxY5bmnrd1OpPDocqMWV8Wg',
+        user_agent = 'andrew_web_scraper',
+    )
+    reddit.read_only = True;
+    
     print()
-    user_name = GetUsernameInput()
+    user_name = GetUsernameInput(reddit)
     print()
     
     with open("scraper_output.json", mode='w') as outfile:
         json.dump([], outfile, indent=2)
-        
+    
     user_as_redditor = reddit.redditor(user_name)
     user_info = UserInfo()
     
@@ -370,22 +369,22 @@ if __name__ == '__main__':
         user_info.ConvertBasicInfoToTxt()
         
         u1 = TopFiveVotedSubmissionsData()
-        u1.FindFiveMostVotedSubmissions()
+        u1.FindFiveMostVotedSubmissions(user_submissions_list)
         u1.PrintFiveMostVotedSubmissions()
         u1.ConvertFiveMostVotedSubmissionsToTxt()
         
         u2 = TopFiveVotedCommentsData()
-        u2.FindFiveMostVotedComments()
+        u2.FindFiveMostVotedComments(user_comments_list)
         u2.PrintFiveMostVotedComments()
         u2.ConvertFiveMostVotedCommentsToTxt()
         
         u3 = VoteDistribution()
-        u3.FindVoteDistribution()
+        u3.FindVoteDistribution(user_comments_list, user_submissions_list)
         u3.PrintVoteDistribution()
         u3.ConvertVoteDistributionToTxt()
         
         u4 = MostActiveSubs()
-        u4.FindMostActive()
+        u4.FindMostActive(user_comments_list, user_submissions_list)
         u4.PrintActiveSubs()
         u4.ConvertActiveSubsToTxt()
         
