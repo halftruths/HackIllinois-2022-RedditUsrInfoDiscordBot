@@ -10,6 +10,15 @@ import time
 from prawcore.exceptions import NotFound
 import json
 
+from dotenv import load_dotenv
+import scraper as scrape
+
+load_dotenv("./.env")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+PASSWORD = os.getenv("PASS")
+USER_AGENT = os.getenv("USER_AGENT")
+USERNAME = os.getenv("USERNAME")
 
 abs_path = os.path.abspath(__file__)
 dir_name = os.path.dirname(abs_path)
@@ -55,7 +64,7 @@ class UserInfo:
         self.suspended = suspended
         self.info_map = {"Username":self.name, "Cake Day":self.cake_day, "Age":self.age, "User Comment Karma":self.karma_comments, "User Overall Karma":self.karma_overall, "User is a moderator":self.moderator, "User is suspended":self.suspended, "User ID":self.id}
     
-    def SetBasicInfo(self):
+    def SetBasicInfo(self, user_as_redditor):
         #Username
         self.name = user_as_redditor.name
         #Is user suspended
@@ -100,6 +109,13 @@ class UserInfo:
     def PrintBasicInfo(self):
         for i,(k,v) in enumerate(self.info_map.items()):
             print(str(k) + ": " + str(v))
+
+    def BasicInfoAsString(self):
+        to_return = ""
+        for i,(k,v) in enumerate(self.info_map.items()):
+            to_return += str(k) + ": " + str(v) + "\n"
+        return to_return
+
 class TopFiveVotedSubmissionsData:
     descriptive_header: str
     info_list_of_maps: list
@@ -125,6 +141,17 @@ class TopFiveVotedSubmissionsData:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
+
+    def GetFiveMostVotedSubmissions(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
             
     def ConvertFiveMostVotedSubmissionsToTxt(self):
         with open("scraper_output.json", "r") as f:   
@@ -168,6 +195,17 @@ class TopFiveVotedCommentsData:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
+
+    def GetFiveMostVotedComments(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
             
     def ConvertFiveMostVotedCommentsToTxt(self):
         with open("scraper_output.json", "r") as f:   
@@ -230,7 +268,30 @@ class VoteDistribution:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
+
+    def GetVoteDistribution(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
+
+    def GetDistributionAsList(self):
+        dist_list = []
+        labels = []
+        for idx in range(0,len(self.info_list_of_maps)):
             
+           for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                if k == 'Vote Count':
+                    dist_list.append(v)
+                elif k == 'Subreddit':
+                    labels.append(v)
+        return dist_list, labels
+
     def ConvertVoteDistributionToTxt(self):
         with open("scraper_output.json", "r") as f:   
             feed = json.load(f) 
@@ -290,7 +351,29 @@ class MostActiveSubs:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
-            
+
+    def GetActiveSubs(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
+
+    def GetActiveSubsAsList(self):
+        subs_list = []
+        labels = []
+        for idx in range(0, len(self.info_list_of_maps)):
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                if k == 'Post/Repl Count':
+                    subs_list.append(v)
+                if k == 'Subreddit':
+                    labels.append(v)
+        return subs_list, labels
+
     def ConvertActiveSubsToTxt(self):
         with open("scraper_output.json", "r") as f:   
             feed = json.load(f) 
@@ -341,9 +424,11 @@ def GetUserFromJson(file_name:str):
 if __name__ == '__main__':
     
     reddit = praw.Reddit( #instance of praw reddit for API access
-        client_id = 'g1newHxnqEdQYH8vN8hSLw',
-        client_secret = '34WhZ0gJxY5bmnrd1OpPDocqMWV8Wg',
-        user_agent = 'andrew_web_scraper',
+    client_id = CLIENT_ID,
+    client_secret = CLIENT_SECRET,
+    password = PASSWORD,
+    user_agent = USER_AGENT,
+    username = USERNAME,
     )
     reddit.read_only = True;
     
