@@ -67,6 +67,7 @@ async def on_message(message):
                     add_user_to_dict(username)
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
+                    return
             user = username_dict[username]
             info_string = user.user_info.BasicInfoAsString()
             embed = make_embed("User Info", info_string)
@@ -83,6 +84,7 @@ async def on_message(message):
                     add_user_to_dict(username)
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
+                    return
             user = username_dict[username]
             distribution = scraper.VoteDistribution()
             distribution.FindVoteDistribution(user.user_comments_list, user.user_submissions_list)
@@ -107,6 +109,7 @@ async def on_message(message):
                     add_user_to_dict(username)
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
+                    return
             user = username_dict[username]
             most_subs = scraper.MostActiveSubs()
             most_subs.FindMostActive(user.user_comments_list, user.user_submissions_list)
@@ -130,6 +133,7 @@ async def on_message(message):
                     add_user_to_dict(username)
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
+                    return
             user = username_dict[username]
             top_posts = scraper.TopFiveVotedSubmissionsData()
             top_posts.FindFiveMostVotedSubmissions(user.user_submissions_list)
@@ -151,6 +155,7 @@ async def on_message(message):
                     add_user_to_dict(username)
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
+                    return
             user = username_dict[username]
             top_comms = scraper.TopFiveVotedCommentsData()
             top_comms.FindFiveMostVotedComments(user.user_comments_list)
@@ -167,6 +172,7 @@ async def on_message(message):
                     add_user_to_dict(username)
                 else:
                     await message.channel.send("Error: Invalid username inputted.")
+                    return
             user = username_dict[username]
             info_string = user.user_info.BasicInfoAsString()
 
@@ -188,10 +194,14 @@ async def on_message(message):
 
             embed = make_embed("Reddit Scrape Summary", "For u/" + username)
             embed.add_field(name="User Statistics", value=info_string, inline=False)
-            embed.add_field(name="Top Servers by Upvotes", value=dist_string, inline=False)
-            embed.add_field(name="Top Servers by Posts/Replies", value=subs_string, inline=False)
-            embed.add_field(name="Top 5 Posts by Upvotes", value=posts_string, inline=False)
-            embed.add_field(name="Top 5 Comments by Upvotes", value=comms_string, inline=False)
+            if (dist_string != ""):
+                embed.add_field(name="Top Servers by Upvotes", value=dist_string, inline=False)
+            if (subs_string != ""):
+                embed.add_field(name="Top Servers by Posts/Replies", value=subs_string, inline=False)
+            if (posts_string != ""):
+                embed.add_field(name="Top 5 Posts by Upvotes", value=posts_string, inline=False)
+            if (comms_string != ""):
+                embed.add_field(name="Top 5 Comments by Upvotes", value=comms_string, inline=False)
             await message.channel.send(embed=embed)
 
 
