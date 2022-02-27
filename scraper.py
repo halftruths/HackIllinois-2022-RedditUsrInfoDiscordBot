@@ -90,7 +90,11 @@ class UserInfo:
             if (user_as_redditor.is_mod):
                 self.moderator = "True";
             self.info_map = {"Username":self.name, "Cake Day":self.cake_day, "Age":self.age, "User Comment Karma":self.karma_comments, "User Overall Karma":self.karma_overall, "User is a moderator":self.moderator, "User is suspended":self.suspended, "User ID":self.id}
-
+            
+    def SetUserInfo(self, data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_map[k] = v
+        
             
     def IsSuspended(self):
         return self.suspended == "True"
@@ -144,6 +148,11 @@ class TopFiveVotedSubmissionsData:
             to_append = {"FiveMostVotedSubmissions":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+            
+    
+    def SetFiveMostVotedSubmissionsFromJsonMap(self, data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
 class TopFiveVotedCommentsData:
     descriptive_header: str
     info_list_of_maps: list
@@ -179,9 +188,13 @@ class TopFiveVotedCommentsData:
                 for idx, (k,v) in enumerate(self.info_list_of_maps[i].items()):
                     submission_map[k] = v
                 info_map.update({i+1:submission_map.copy()})
-            to_append = {"FiveMostVotedSubmissions":info_map}
+            to_append = {"FiveMostVotedComments":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+            
+    def SetFiveMostVotedCommentsFromJsonMap(self, data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
 class VoteDistribution:
     descriptive_header: str
     info_list_of_maps: list
@@ -240,6 +253,10 @@ class VoteDistribution:
             to_append = {"VoteDistribution":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+            
+    def SetVoteDistributionFromJsonMap(self,data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
 class MostActiveSubs:
     descriptive_header: str
     info_list_of_maps: list
@@ -296,6 +313,39 @@ class MostActiveSubs:
             to_append = {"MostActiveSubreddits":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+    
+    def SetMostActiveFromJsonMap(self,data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
+            
+def GetUserFromJson(file_name:str):
+    to_return = {}
+    with open(file_name, mode='r') as outfile:
+        data = json.load(outfile)
+    for i in data:
+        type = str(list(i.keys())[0])
+        data = list(i.values())[0]
+        if(type == "UserInfo"):
+            instance = UserInfo()
+            instance.SetUserInfo(data)
+            to_return[type] = instance
+        elif(type == "FiveMostVotedSubmissions"):
+            instance = TopFiveVotedSubmissionsData()
+            instance.SetFiveMostVotedSubmissionsFromJsonMap(data)
+            to_return[type] = instance
+        elif(type == "FiveMostVotedComments"):
+            instance = TopFiveVotedCommentsData()
+            instance.SetFiveMostVotedCommentsFromJsonMap(data)
+            to_return[type] = instance
+        elif(type == "VoteDistribution"):
+            instance = VoteDistribution()
+            instance.SetVoteDistributionFromJsonMap(data)
+            to_return[type] = instance
+        elif(type == "MostActiveSubreddits"):
+            instance = MostActiveSubs()
+            instance.SetMostActiveFromJsonMap(data)
+            to_return[type] = instance
+    return to_return
 
 if __name__ == '__main__':
     print()
@@ -338,4 +388,13 @@ if __name__ == '__main__':
         u4.FindMostActive()
         u4.PrintActiveSubs()
         u4.ConvertActiveSubsToTxt()
-    print("")
+        
+        #test json reader
+        '''print("")
+        temp = GetUserFromJson("scraper_output.json")
+        temp["UserInfo"].PrintBasicInfo()
+        temp["FiveMostVotedSubmissions"].PrintFiveMostVotedSubmissions()
+        temp["FiveMostVotedComments"].PrintFiveMostVotedComments()
+        temp["VoteDistribution"].PrintVoteDistribution()
+        temp["MostActiveSubreddits"].PrintActiveSubs()'''
+        print("")
