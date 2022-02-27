@@ -24,27 +24,18 @@ abs_path = os.path.abspath(__file__)
 dir_name = os.path.dirname(abs_path)
 os.chdir(dir_name)
 
-reddit = praw.Reddit( #instance of praw reddit for API access
-    client_id = CLIENT_ID,
-    client_secret = CLIENT_SECRET,
-    password = PASSWORD,
-    user_agent = USER_AGENT,
-    username = USERNAME,
-)
-reddit.read_only = True;
-
-def UserExists(name: str): #Check if username exists
+def UserExists(name: str, reddit: praw.models.Redditor): #Check if username exists
     try:
         reddit.redditor(name).id
     except NotFound:
         return False
     return True
 
-def GetUsernameInput(): #Check if inputted username is valid
+def GetUsernameInput(reddit: praw.models.Redditor): #Check if inputted username is valid
     name = input("Enter username (eg _dancingrain_): ")
-    if (not UserExists(name)):
+    if (not UserExists(name, reddit)):
         print("\nUsername not found, try again\n")
-        return GetUsernameInput()
+        return GetUsernameInput(reddit)
     return name;
 
 class UserInfo:
@@ -99,7 +90,11 @@ class UserInfo:
             if (user_as_redditor.is_mod):
                 self.moderator = "True";
             self.info_map = {"Username":self.name, "Cake Day":self.cake_day, "Age":self.age, "User Comment Karma":self.karma_comments, "User Overall Karma":self.karma_overall, "User is a moderator":self.moderator, "User is suspended":self.suspended, "User ID":self.id}
-
+            
+    def SetUserInfo(self, data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_map[k] = v
+        
             
     def IsSuspended(self):
         return self.suspended == "True"
@@ -122,7 +117,7 @@ class TopFiveVotedSubmissionsData:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindFiveMostVotedSubmissions(self):
+    def FindFiveMostVotedSubmissions(self, user_submissions_list:list):
         sorted_submissions = sorted(user_submissions_list,key=lambda x:x.score, reverse=True)
         idx = 0
         for submission in sorted_submissions:
@@ -139,6 +134,17 @@ class TopFiveVotedSubmissionsData:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
+
+    def GetFiveMostVotedSubmissions(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
             
     def ConvertFiveMostVotedSubmissionsToTxt(self):
         with open("scraper_output.json", "r") as f:   
@@ -153,6 +159,11 @@ class TopFiveVotedSubmissionsData:
             to_append = {"FiveMostVotedSubmissions":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+            
+    
+    def SetFiveMostVotedSubmissionsFromJsonMap(self, data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
 class TopFiveVotedCommentsData:
     descriptive_header: str
     info_list_of_maps: list
@@ -160,7 +171,7 @@ class TopFiveVotedCommentsData:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindFiveMostVotedComments(self):
+    def FindFiveMostVotedComments(self, user_comments_list: list):
         sorted_comments = sorted(user_comments_list,key=lambda x:x.score, reverse=True)
         idx = 0
         for comments in sorted_comments:
@@ -177,6 +188,17 @@ class TopFiveVotedCommentsData:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
+
+    def GetFiveMostVotedComments(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
             
     def ConvertFiveMostVotedCommentsToTxt(self):
         with open("scraper_output.json", "r") as f:   
@@ -188,9 +210,13 @@ class TopFiveVotedCommentsData:
                 for idx, (k,v) in enumerate(self.info_list_of_maps[i].items()):
                     submission_map[k] = v
                 info_map.update({i+1:submission_map.copy()})
-            to_append = {"FiveMostVotedSubmissions":info_map}
+            to_append = {"FiveMostVotedComments":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+            
+    def SetFiveMostVotedCommentsFromJsonMap(self, data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
 class VoteDistribution:
     descriptive_header: str
     info_list_of_maps: list
@@ -198,7 +224,7 @@ class VoteDistribution:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindVoteDistribution(self): 
+    def FindVoteDistribution(self, user_comments_list:list, user_submissions_list:list): 
         active_subreddits_map = {}
         #combine comments and submissions into dictionary format {sub name, upvote count} to easily organize subreddits and increment their upvote counts
         for comments in user_comments_list:
@@ -235,7 +261,27 @@ class VoteDistribution:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
+
+    def GetVoteDistribution(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
+
+    def GetDistributionAsList(self):
+        dist_list = []
+        for idx in range(0,len(self.info_list_of_maps)):
             
+           for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                temp = v.split()
+                dist_list += (temp[0], temp[5])
+        return dist_list
+
     def ConvertVoteDistributionToTxt(self):
         with open("scraper_output.json", "r") as f:   
             feed = json.load(f) 
@@ -249,6 +295,10 @@ class VoteDistribution:
             to_append = {"VoteDistribution":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+            
+    def SetVoteDistributionFromJsonMap(self,data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
 class MostActiveSubs:
     descriptive_header: str
     info_list_of_maps: list
@@ -256,7 +306,7 @@ class MostActiveSubs:
         self.descriptive_header = descriptive_header
         self.info_list_of_maps = []
         
-    def FindMostActive(self):
+    def FindMostActive(self, user_comments_list:list, user_submissions_list:list):
         active_subreddits_map = {}
         #combine comments and submissions into dictionary format {sub name, upvote count} to easily organize subreddits and increment their interaction count
         for comments in user_comments_list:
@@ -291,7 +341,26 @@ class MostActiveSubs:
                 if idx1 < len(self.info_list_of_maps[idx]):
                     to_print += " | "
             print(to_print)
-            
+
+    def GetActiveSubs(self):
+        to_print = ""
+        for idx in range(0,len(self.info_list_of_maps)):
+            if idx != 0:
+                to_print += "\n"
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                to_print += str(k) + ": " + str(v)
+                if idx1 < len(self.info_list_of_maps[idx]):
+                    to_print += " | "
+        return to_print
+
+    def GetActiveSubsAsList(self):
+        subs_list = []
+        for idx in range(0, len(self.info_list_of_maps)):
+            for idx1,(k,v) in enumerate(self.info_list_of_maps[idx].items()):
+                temp = v.split()
+                subs_list += (temp[0], temp[5])
+        return subs_list
+
     def ConvertActiveSubsToTxt(self):
         with open("scraper_output.json", "r") as f:   
             feed = json.load(f) 
@@ -305,15 +374,58 @@ class MostActiveSubs:
             to_append = {"MostActiveSubreddits":info_map}
             feed.append(to_append)
             json.dump(list(feed), outfile, indent=2)
+    
+    def SetMostActiveFromJsonMap(self,data:map):
+        for i,(k,v) in enumerate(data.items()):
+            self.info_list_of_maps.append({k:v})
+            
+def GetUserFromJson(file_name:str):
+    to_return = {}
+    with open(file_name, mode='r') as outfile:
+        data = json.load(outfile)
+    for i in data:
+        type = str(list(i.keys())[0])
+        data = list(i.values())[0]
+        if(type == "UserInfo"):
+            instance = UserInfo()
+            instance.SetUserInfo(data)
+            to_return[type] = instance
+        elif(type == "FiveMostVotedSubmissions"):
+            instance = TopFiveVotedSubmissionsData()
+            instance.SetFiveMostVotedSubmissionsFromJsonMap(data)
+            to_return[type] = instance
+        elif(type == "FiveMostVotedComments"):
+            instance = TopFiveVotedCommentsData()
+            instance.SetFiveMostVotedCommentsFromJsonMap(data)
+            to_return[type] = instance
+        elif(type == "VoteDistribution"):
+            instance = VoteDistribution()
+            instance.SetVoteDistributionFromJsonMap(data)
+            to_return[type] = instance
+        elif(type == "MostActiveSubreddits"):
+            instance = MostActiveSubs()
+            instance.SetMostActiveFromJsonMap(data)
+            to_return[type] = instance
+    return to_return
 
 if __name__ == '__main__':
+    
+    reddit = praw.Reddit( #instance of praw reddit for API access
+    client_id = CLIENT_ID,
+    client_secret = CLIENT_SECRET,
+    password = PASSWORD,
+    user_agent = USER_AGENT,
+    username = USERNAME,
+    )
+    reddit.read_only = True;
+    
     print()
-    user_name = GetUsernameInput()
+    user_name = GetUsernameInput(reddit)
     print()
     
     with open("scraper_output.json", mode='w') as outfile:
         json.dump([], outfile, indent=2)
-        
+    
     user_as_redditor = reddit.redditor(user_name)
     user_info = UserInfo()
     
@@ -329,22 +441,31 @@ if __name__ == '__main__':
         user_info.ConvertBasicInfoToTxt()
         
         u1 = TopFiveVotedSubmissionsData()
-        u1.FindFiveMostVotedSubmissions()
+        u1.FindFiveMostVotedSubmissions(user_submissions_list)
         u1.PrintFiveMostVotedSubmissions()
         u1.ConvertFiveMostVotedSubmissionsToTxt()
         
         u2 = TopFiveVotedCommentsData()
-        u2.FindFiveMostVotedComments()
+        u2.FindFiveMostVotedComments(user_comments_list)
         u2.PrintFiveMostVotedComments()
         u2.ConvertFiveMostVotedCommentsToTxt()
         
         u3 = VoteDistribution()
-        u3.FindVoteDistribution()
+        u3.FindVoteDistribution(user_comments_list, user_submissions_list)
         u3.PrintVoteDistribution()
         u3.ConvertVoteDistributionToTxt()
         
         u4 = MostActiveSubs()
-        u4.FindMostActive()
+        u4.FindMostActive(user_comments_list, user_submissions_list)
         u4.PrintActiveSubs()
         u4.ConvertActiveSubsToTxt()
-    print("")
+        
+        #test json reader
+        '''print("")
+        temp = GetUserFromJson("scraper_output.json")
+        temp["UserInfo"].PrintBasicInfo()
+        temp["FiveMostVotedSubmissions"].PrintFiveMostVotedSubmissions()
+        temp["FiveMostVotedComments"].PrintFiveMostVotedComments()
+        temp["VoteDistribution"].PrintVoteDistribution()
+        temp["MostActiveSubreddits"].PrintActiveSubs()'''
+        print("")
